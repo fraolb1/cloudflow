@@ -15,25 +15,13 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import FileUploader from "@/components/FileUploader";
-import { signOutUser } from "@/lib/actions/user.actions";
+import { logout } from "@/actions/logout";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
-interface Props {
-  $id: string;
-  accountId: string;
-  fullName: string;
-  avatar: string;
-  email: string;
-}
-
-const MobileNavigation = ({
-  $id: ownerId,
-  accountId,
-  fullName,
-  avatar,
-  email,
-}: Props) => {
+const MobileNavigation = () => {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const user = useCurrentUser();
 
   return (
     <header className="mobile-header">
@@ -58,15 +46,15 @@ const MobileNavigation = ({
           <SheetTitle>
             <div className="header-user">
               <Image
-                src={avatar}
+                src={user?.image ?? ""}
                 alt="avatar"
                 width={44}
                 height={44}
                 className="header-user-avatar"
               />
               <div className="sm:hidden lg:block">
-                <p className="subtitle-2 capitalize">{fullName}</p>
-                <p className="caption">{email}</p>
+                <p className="subtitle-2 capitalize">{user?.name}</p>
+                <p className="caption">{user?.email}</p>
               </div>
             </div>
             <Separator className="mb-4 bg-light-200/20" />
@@ -79,7 +67,7 @@ const MobileNavigation = ({
                   <li
                     className={cn(
                       "mobile-nav-item",
-                      pathname === url && "shad-active",
+                      pathname === url && "shad-active"
                     )}
                   >
                     <Image
@@ -89,7 +77,7 @@ const MobileNavigation = ({
                       height={24}
                       className={cn(
                         "nav-icon",
-                        pathname === url && "nav-icon-active",
+                        pathname === url && "nav-icon-active"
                       )}
                     />
                     <p>{name}</p>
@@ -102,11 +90,11 @@ const MobileNavigation = ({
           <Separator className="my-5 bg-light-200/20" />
 
           <div className="flex flex-col justify-between gap-5 pb-5">
-            <FileUploader ownerId={ownerId} accountId={accountId} />
+            <FileUploader ownerId={user?.id ?? ""} accountId={user?.id ?? ""} />
             <Button
               type="submit"
               className="mobile-sign-out-button"
-              onClick={async () => await signOutUser()}
+              onClick={async () => await logout()}
             >
               <Image
                 src="/assets/icons/logout.svg"

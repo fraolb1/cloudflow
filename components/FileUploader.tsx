@@ -9,7 +9,7 @@ import Image from "next/image";
 import Thumbnail from "@/components/Thumbnail";
 import { MAX_FILE_SIZE } from "@/constants";
 import { useToast } from "@/hooks/use-toast";
-import { uploadFile } from "@/lib/actions/file.actions";
+import { uploadFile } from "@/actions/files";
 import { usePathname } from "next/navigation";
 
 interface Props {
@@ -30,7 +30,7 @@ const FileUploader = ({ ownerId, accountId, className }: Props) => {
       const uploadPromises = acceptedFiles.map(async (file) => {
         if (file.size > MAX_FILE_SIZE) {
           setFiles((prevFiles) =>
-            prevFiles.filter((f) => f.name !== file.name),
+            prevFiles.filter((f) => f.name !== file.name)
           );
 
           return toast({
@@ -48,23 +48,23 @@ const FileUploader = ({ ownerId, accountId, className }: Props) => {
           (uploadedFile) => {
             if (uploadedFile) {
               setFiles((prevFiles) =>
-                prevFiles.filter((f) => f.name !== file.name),
+                prevFiles.filter((f) => f.name !== file.name)
               );
             }
-          },
+          }
         );
       });
 
       await Promise.all(uploadPromises);
     },
-    [ownerId, accountId, path],
+    [ownerId, accountId, path]
   );
 
   const { getRootProps, getInputProps } = useDropzone({ onDrop });
 
   const handleRemoveFile = (
     e: React.MouseEvent<HTMLImageElement, MouseEvent>,
-    fileName: string,
+    fileName: string
   ) => {
     e.stopPropagation();
     setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
