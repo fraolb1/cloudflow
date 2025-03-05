@@ -15,6 +15,9 @@ model User {
   image         String?
   password      String?
   accounts      Account[]
+
+  File File[]
+
 }
 
 model Account {
@@ -35,4 +38,50 @@ model Account {
 
   @@unique([provider, providerAccountId])
 }
+
+// schema.prisma
+
+model File {
+  id        String   @id @default(cuid())
+  name      String   // Original file name
+  key       String   // S3 key/path
+  url       String   // S3 URL
+  size      Int      // File size in bytes
+  type      String   // File MIME type
+  extension String?  // File extension
+
+  // File status
+  status    FileStatus @default(PROCESSING)
+  
+  // Metadata
+  path      String?   // Upload path/location in the application
+  metadata  Json?     // Additional metadata as JSON
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Owner relationship
+  ownerId   String
+  owner     User      @relation(fields: [ownerId], references: [id])
+
+  // Optional folder organization
+  folderId  String?
+
+  // Soft delete
+  deleted   Boolean   @default(false)
+  deletedAt DateTime?
+
+  @@index([ownerId])
+  @@index([folderId])
+  @@index([status])
+  @@index([deleted])
+}
+
+enum FileStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
 

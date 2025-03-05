@@ -15,7 +15,7 @@ const Header = () => {
     <header className="hidden items-center justify-between gap-5 p-5 sm:flex lg:py-7 xl:gap-10">
       <Search />
       <div className="flex-center min-w-fit gap-4 flex">
-        {user?.id && <FileUploader ownerId={user.id} accountId={user.id} />}
+        {user?.id && <FileUploader ownerId={user.id} />}
         <LogoutButton />
       </div>
     </header>

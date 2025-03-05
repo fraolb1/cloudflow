@@ -1,67 +1,98 @@
-"use server";
-
 import { files } from "@/data/dummy";
-import { User } from "next-auth";
+import { db } from "@/lib/db";
 
-const handleError = (error: unknown, message: string) => {
-  console.log(error, message);
-  throw error;
+// types/file.ts
+export type File = {
+  id: string;
+  name: string;
+  key: string;
+  url: string;
+  size: number;
+  type: string;
+  extension: string | null;
+  status: "PROCESSING" | "COMPLETED" | "FAILED";
+  path: string | null;
+  metadata: Record<string, any> | null;
+  createdAt: Date;
+  updatedAt: Date;
+  ownerId: string;
+  folderId: string | null;
+  deleted: boolean;
+  deletedAt: Date | null;
 };
 
-export const uploadFile = async ({
-  file,
-  ownerId,
-  accountId,
-  path,
-}: UploadFileProps) => {
-  //  todo
-};
-
-const createQueries = (
-  currentUser: User,
-  types: string[],
-  searchText: string,
-  sort: string,
-  limit?: number
-) => {
-  //   todo
-};
-
-export const getFiles = async ({
-  types = [],
-  searchText = "",
-  sort = "$createdAt-desc",
-  limit,
-}: GetFilesProps) => {
+export const getFiles = (type: any[], limit: number) => {
   return files;
 };
 
-export const renameFile = async ({
-  fileId,
-  name,
-  extension,
-  path,
-}: RenameFileProps) => {
-  //   todo
+export const getTotalSpaceUsed = () => {
+  return "";
 };
 
-export const updateFileUsers = async ({
-  fileId,
-  emails,
-  path,
-}: UpdateFileUsersProps) => {
-  //   todo
-};
+// Create a file record
+export async function createFileRecord(fileData: {
+  name: string;
+  key: string;
+  url: string;
+  size: number;
+  type: string;
+  ownerId: string;
+}) {
+  return await db.file.create({
+    data: {
+      ...fileData,
+      extension: fileData.name.split(".").pop() || null,
+    },
+  });
+}
 
-export const deleteFile = async ({
-  fileId,
-  bucketFileId,
-  path,
-}: DeleteFileProps) => {
-  //
-};
+// Get user's files
+async function getUserFiles(userId: string) {
+  return await db.file.findMany({
+    where: {
+      ownerId: userId,
+      deleted: false,
+    },
 
-// ============================== TOTAL FILE SPACE USED
-export async function getTotalSpaceUsed() {
-  //   todo
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}
+
+// Soft delete a file
+async function deleteFile(fileId: string) {
+  return await db.file.update({
+    where: { id: fileId },
+    data: {
+      deleted: true,
+      deletedAt: new Date(),
+    },
+  });
+}
+
+async function getFolderFiles(folderId: string) {
+  return await db.file.findMany({
+    where: {
+      folderId,
+      deleted: false,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}
+
+// Search files
+async function searchFiles(userId: string, searchTerm: string) {
+  return await db.file.findMany({
+    where: {
+      ownerId: userId,
+      deleted: false,
+      OR: [
+        { name: { contains: searchTerm, mode: "insensitive" } },
+        { type: { contains: searchTerm, mode: "insensitive" } },
+      ],
+    },
+  });
 }
