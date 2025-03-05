@@ -118,13 +118,9 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply scroll-smooth;
   }
   body {
-    @apply bg-background text-foreground;
-  }
-
-  .dashboard-container {
-    @apply mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2 xl:gap-10 !important;
+    @apply bg-white text-black min-h-screen;
   }
 }
