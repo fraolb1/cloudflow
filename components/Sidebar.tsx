@@ -49,8 +49,8 @@ const Sidebar = () => {
                   width={24}
                   height={24}
                   className={cn(
-                    "nav-icon",
-                    pathname === url && "nav-icon-active"
+                    "w-6 filter invert opacity-25",
+                    pathname === url && "invert-0 opacity-100"
                   )}
                 />
                 <p className="hidden lg:block">{name}</p>
@@ -78,7 +78,9 @@ const Sidebar = () => {
         />
         <div className="hidden lg:block">
           <p className="subtitle-2 capitalize">{user?.name}</p>
-          <p className="caption">{user?.email}</p>
+          <p className="text-[12px] leading-[16px] font-normal">
+            {user?.email}
+          </p>
         </div>
       </div>
     </aside>

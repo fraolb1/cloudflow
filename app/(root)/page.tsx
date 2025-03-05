@@ -85,7 +85,7 @@ const Dashboard = async () => {
                     </p>
                     <FormattedDateTime
                       date={file.createdAt}
-                      className="caption"
+                      className="text-[12px] leading-[16px] font-normal"
                     />
                   </div>
                   <ActionDropdown file={file} />

@@ -24,7 +24,7 @@ const MobileNavigation = () => {
   const user = useCurrentUser();
 
   return (
-    <header className="mobile-header">
+    <header className="flex h-[60px] justify-between px-5 sm:hidden ">
       <Image
         src="/assets/icons/logo-full-brand.svg"
         alt="logo"
@@ -44,13 +44,13 @@ const MobileNavigation = () => {
         </SheetTrigger>
         <SheetContent className="shad-sheet h-screen px-3">
           <SheetTitle>
-            <div className="header-user">
+            <div className="my-3 flex items-center gap-2 rounded-full p-1 text-light-100 sm:justify-center sm:bg-brand/10 lg:justify-start lg:p-3 ">
               <Image
                 src={user?.image ?? ""}
                 alt="avatar"
                 width={44}
                 height={44}
-                className="header-user-avatar"
+                className=" aspect-square w-10 rounded-full object-cover"
               />
               <div className="sm:hidden lg:block">
                 <p className="subtitle-2 capitalize">{user?.name}</p>
@@ -60,13 +60,13 @@ const MobileNavigation = () => {
             <Separator className="mb-4 bg-light-200/20" />
           </SheetTitle>
 
-          <nav className="mobile-nav">
-            <ul className="mobile-nav-list">
+          <nav className="h5 flex-1 gap-1 text-brand-">
+            <ul className="flex flex-1 flex-col gap-4">
               {navItems.map(({ url, name, icon }) => (
                 <Link key={name} href={url} className="lg:w-full">
                   <li
                     className={cn(
-                      "mobile-nav-item",
+                      " flex text-light-100 gap-4 w-full justify-start items-center h5 px-6 h-[52px] rounded-full",
                       pathname === url && "shad-active"
                     )}
                   >
@@ -76,8 +76,8 @@ const MobileNavigation = () => {
                       width={24}
                       height={24}
                       className={cn(
-                        "nav-icon",
-                        pathname === url && "nav-icon-active"
+                        "w-6 filter invert opacity-25",
+                        pathname === url && "invert-0 opacity-100"
                       )}
                     />
                     <p>{name}</p>
@@ -93,7 +93,7 @@ const MobileNavigation = () => {
             <FileUploader ownerId={user?.id ?? ""} accountId={user?.id ?? ""} />
             <Button
               type="submit"
-              className="mobile-sign-out-button"
+              className="h5 flex h-[52px] w-full items-center gap-4 rounded-full bg-brand/10 px-6 text-brand shadow-none transition-all hover:bg-brand/20 "
               onClick={async () => await logout()}
             >
               <Image
