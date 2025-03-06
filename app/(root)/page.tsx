@@ -8,21 +8,27 @@ import { Thumbnail } from "@/components/Thumbnail";
 import { Separator } from "@/components/ui/separator";
 import { getFiles, getTotalSpaceUsed } from "@/actions/files";
 import { convertFileSize, getUsageSummary } from "@/lib/utils";
+import { auth } from "@/auth";
 
 const Dashboard = async () => {
-  // Parallel requests
+  const user = await auth();
   const [files, totalSpace] = await Promise.all([
-    getFiles({ types: [], limit: 10 }),
-    getTotalSpaceUsed(),
+    getFiles({ userId: user?.user.id ?? "" }),
+    getTotalSpaceUsed(user?.user.id ?? ""),
   ]);
 
-  // Get usage summary
+  console.log("total: ", totalSpace);
+
   const usageSummary = getUsageSummary(totalSpace);
+  const totalSize = Object.values(totalSpace).reduce(
+    (sum, category) => sum + category.size,
+    0
+  );
 
   return (
     <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2 xl:gap-10">
       <section>
-        <Chart used={1.2} />
+        <Chart used={totalSize} />
 
         {/* Uploaded file type summaries */}
         <ul className="mt-6 grid grid-cols-1 gap-4 xl:mt-10 xl:grid-cols-2 xl:gap-9">
@@ -42,7 +48,7 @@ const Dashboard = async () => {
                     className="absolute -left-3 top-[-25px] z-10 w-[190px] object-contain"
                   />
                   <h4 className="h4 relative z-20 w-full text-right">
-                    {convertFileSize(1.2) || 0}
+                    {convertFileSize(summary.size) || 0}
                   </h4>
                 </div>
 

@@ -42,12 +42,15 @@ export async function POST(request: Request) {
 
     const fileUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
+    const fileType = file.type.split("/")[1] ?? "other";
+    console.log(fileType);
+
     const fileData = {
       name: file.name,
       key: key,
       url: fileUrl,
       size: file.size,
-      type: file.type,
+      type: fileType,
       ownerId: userId || "",
     };
 

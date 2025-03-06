@@ -182,32 +182,36 @@ export const constructDownloadUrl = (bucketFileId: string) => {
 
 // DASHBOARD UTILS
 export const getUsageSummary = (totalSpace: any) => {
+  console.log("space: ", totalSpace);
   return [
     {
       title: "Documents",
-      size: "1.2gb",
-      latestDate: Date.now().toString(),
+      size: totalSpace.documents.size,
+      latestDate: totalSpace.documents.latestDate,
       icon: "/assets/icons/file-document-light.svg",
       url: "/documents",
     },
     {
       title: "Images",
-      size: "1.2gb",
-      latestDate: Date.now().toString(),
+      size: totalSpace.images.size,
+      latestDate: totalSpace.images.latestDate,
       icon: "/assets/icons/file-image-light.svg",
       url: "/images",
     },
     {
       title: "Media",
-      size: "1.2gb",
-      latestDate: Date.now().toString(),
+      size: totalSpace.video.size + totalSpace.audio.size,
+      latestDate:
+        totalSpace.video.latestDate > totalSpace.audio.latestDate
+          ? totalSpace.video.latestDate
+          : totalSpace.audio.latestDate,
       icon: "/assets/icons/file-video-light.svg",
       url: "/media",
     },
     {
       title: "Others",
-      size: "1.2gb",
-      latestDate: Date.now().toString(),
+      size: totalSpace.others.size,
+      latestDate: totalSpace.others.latestDate,
       icon: "/assets/icons/file-other-light.svg",
       url: "/others",
     },
