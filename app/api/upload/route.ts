@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client } from "@/lib/aws";
 import { createFileRecord } from "@/actions/files";
-import { url } from "inspector";
 import { auth } from "@/auth";
 
 export async function POST(request: Request) {
@@ -22,7 +21,6 @@ export async function POST(request: Request) {
     const buffer = await file.arrayBuffer();
     const bytes = new Uint8Array(buffer);
 
-    // Organize files by ownerId and current date
     const key = `uploads/${ownerId}/${
       new Date().toISOString().split("T")[0]
     }/${Date.now()}-${file.name}`;
@@ -43,7 +41,6 @@ export async function POST(request: Request) {
     const fileUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
     const fileType = file.type.split("/")[1] ?? "other";
-    console.log(fileType);
 
     const fileData = {
       name: file.name,

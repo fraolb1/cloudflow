@@ -1,6 +1,7 @@
-import { auth } from "@/auth";
-import { files } from "@/data/dummy";
+"use server";
+import { s3Client } from "@/lib/aws";
 import { db } from "@/lib/db";
+import { CopyObjectCommand, DeleteObjectCommand, S3 } from "@aws-sdk/client-s3";
 import { useSession } from "next-auth/react";
 
 export type File = {
@@ -33,6 +34,7 @@ export const getFiles = async ({
   sort?: string;
   userId: string;
 }) => {
+  console.log(types);
   const typeMapping: Record<string, string[]> = {
     document: ["pdf", "txt", "json", "csv", "doc", "docx", "xls", "xlsx"],
     images: ["jpg", "jpeg", "png", "gif", "bmp", "svg"],
@@ -40,13 +42,13 @@ export const getFiles = async ({
     others: ["zip", "rar", "exe", "iso"],
   };
 
-  // Convert category names into actual file extensions
   const expandedTypes = types
     ? types.flatMap((type) => {
-        console.log(type);
         return typeMapping[type] || type;
       })
     : undefined;
+
+  console.log(expandedTypes);
 
   const aws_files = await db.file.findMany({
     where: {
@@ -63,12 +65,38 @@ export const getFiles = async ({
     },
   });
 
-  console.log(aws_files);
-
   return { documents: aws_files };
 };
 
-export const renameFile = ({
+export async function renameS3Object(
+  bucketName: string,
+  oldKey: string,
+  newKey: string
+) {
+  try {
+    const copy = await s3Client.send(
+      new CopyObjectCommand({
+        Bucket: bucketName,
+        CopySource: `${bucketName}/${oldKey}`,
+        Key: newKey,
+      })
+    );
+
+    const deleted = await s3Client.send(
+      new DeleteObjectCommand({
+        Bucket: bucketName,
+        Key: oldKey,
+      })
+    );
+
+    return { success: true, message: "Object renamed successfully" };
+  } catch (error) {
+    console.error("Error renaming object:", error);
+    return { success: false, error: "Failed to rename object" };
+  }
+}
+
+export const renameFile = async ({
   fileId,
   name,
   extension,
@@ -78,8 +106,49 @@ export const renameFile = ({
   name: string;
   extension: string;
   path: string;
-}) => {};
-export const updateFileUsers = ({
+}) => {
+  console.log(fileId);
+  const file = await db.file.findFirst({
+    where: {
+      id: fileId,
+    },
+  });
+
+  if (!file) {
+    return "No File is Found";
+  }
+
+  console.log(file);
+
+  const key = file.key.split("/");
+  key.pop();
+  key.push(`${name}`);
+
+  const new_key = key.join("/");
+
+  const change_Aws_name = await renameS3Object(
+    process.env.AWS_S3_BUCKET || "",
+    file.key,
+    new_key.toString()
+  );
+
+  if (!change_Aws_name.success) {
+    return "Unseccusseful";
+  }
+  const fileUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${new_key}`;
+  return await db.file.update({
+    where: {
+      id: fileId,
+    },
+    data: {
+      name: name,
+      key: new_key,
+      url: fileUrl,
+    },
+  });
+};
+
+export const updateFileUsers = async ({
   fileId,
   emails,
   path,
@@ -102,8 +171,6 @@ export const getTotalSpaceUsed = async (userId: string) => {
       updatedAt: true,
     },
   });
-
-  console.log(totalSpace);
 
   // Mapping file types to categories
   const categoryMapping: Record<
@@ -188,13 +255,12 @@ export async function getUserFiles(userId: string) {
 
 export async function deleteFile({
   fileId,
-  bucketFileId,
-  path,
 }: {
   fileId: string;
   bucketFileId: string;
   path: string;
 }) {
+  console.log("file: ", fileId);
   return await db.file.update({
     where: { id: fileId },
     data: {

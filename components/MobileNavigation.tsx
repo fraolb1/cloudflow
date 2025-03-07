@@ -90,7 +90,7 @@ const MobileNavigation = () => {
           <Separator className="my-5 bg-light-200/20" />
 
           <div className="flex flex-col justify-between gap-5 pb-5">
-            <FileUploader ownerId={user?.id ?? ""} accountId={user?.id ?? ""} />
+            <FileUploader ownerId={user?.id ?? ""} />
             <Button
               type="submit"
               className="h5 flex h-[52px] w-full items-center gap-4 rounded-full bg-brand/10 px-6 text-brand shadow-none transition-all hover:bg-brand/20 "

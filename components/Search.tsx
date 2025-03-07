@@ -9,6 +9,7 @@ import { getFiles } from "@/actions/files";
 import Thumbnail from "@/components/Thumbnail";
 import FormattedDateTime from "@/components/FormattedDateTime";
 import { useDebounce } from "use-debounce";
+import { useCurrentUser } from "@/hooks/use-current-user";
 const Search = () => {
   const [query, setQuery] = useState("");
   const searchParams = useSearchParams();
@@ -18,6 +19,7 @@ const Search = () => {
   const router = useRouter();
   const path = usePathname();
   const [debouncedQuery] = useDebounce(query, 300);
+  const user = useCurrentUser();
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -27,7 +29,11 @@ const Search = () => {
         return router.push(path.replace(searchParams.toString(), ""));
       }
 
-      const files = await getFiles({ types: [], searchText: debouncedQuery });
+      const files = await getFiles({
+        types: [],
+        searchText: debouncedQuery,
+        userId: user?.id ?? "",
+      });
       setResults(files.documents);
       setOpen(true);
     };

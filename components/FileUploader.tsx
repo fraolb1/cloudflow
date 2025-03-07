@@ -73,7 +73,7 @@ const FileUploader = ({ ownerId, className }: Props) => {
     <div className="flex flex-col gap-4">
       <label className={`inline-flex cursor-pointer ${className}`}>
         <button
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-flex items-center gap-2"
+          className="px-4 py-2 bg-slate-700 text-white  rounded-lg hover:bg-blue-700 inline-flex items-center gap-2"
           onClick={() => document.getElementById("file-input")?.click()}
           type="button"
         >
@@ -82,7 +82,7 @@ const FileUploader = ({ ownerId, className }: Props) => {
             alt="upload"
             width={20}
             height={20}
-            className="text-white"
+            className=""
           />
           Upload
         </button>

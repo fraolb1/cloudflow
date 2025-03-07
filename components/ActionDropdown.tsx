@@ -52,7 +52,7 @@ const ActionDropdown = ({ file }: { file: any }) => {
     const actions = {
       rename: async () => {
         await renameFile({
-          fileId: file.$id,
+          fileId: file.id,
           name,
           extension: file.extension,
           path,
@@ -65,7 +65,7 @@ const ActionDropdown = ({ file }: { file: any }) => {
       },
       delete: async () => {
         await deleteFile({
-          fileId: file.$id,
+          fileId: file.id,
           bucketFileId: file.bucketFileId,
           path,
         });

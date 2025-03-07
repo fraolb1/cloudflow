@@ -7,7 +7,7 @@ import { FormattedDateTime } from "@/components/FormattedDateTime";
 import { Thumbnail } from "@/components/Thumbnail";
 import { Separator } from "@/components/ui/separator";
 import { getFiles, getTotalSpaceUsed } from "@/actions/files";
-import { convertFileSize, getUsageSummary } from "@/lib/utils";
+import { convertFileSize, getFileTypes, getUsageSummary } from "@/lib/utils";
 import { auth } from "@/auth";
 
 const Dashboard = async () => {
@@ -16,8 +16,6 @@ const Dashboard = async () => {
     getFiles({ userId: user?.user.id ?? "" }),
     getTotalSpaceUsed(user?.user.id ?? ""),
   ]);
-
-  console.log("total: ", totalSpace);
 
   const usageSummary = getUsageSummary(totalSpace);
   const totalSize = Object.values(totalSpace).reduce(
@@ -28,37 +26,43 @@ const Dashboard = async () => {
   return (
     <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2 xl:gap-10">
       <section>
-        <Chart used={totalSize} />
+        <Chart used={totalSize * 100} />
 
         {/* Uploaded file type summaries */}
-        <ul className="mt-6 grid grid-cols-1 gap-4 xl:mt-10 xl:grid-cols-2 xl:gap-9">
+        <ul className="mt-6 grid grid-cols-1 gap-6 xl:mt-10 xl:grid-cols-2 xl:gap-10">
           {usageSummary.map((summary) => (
             <Link
               href={summary.url}
               key={summary.title}
-              className="relative mt-6 rounded-[20px] bg-white p-5 transition-all hover:scale-105"
+              className="relative overflow-hidden rounded-2xl bg-white p-6 shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl"
             >
-              <div className="space-y-4">
-                <div className="flex justify-between gap-3">
-                  <Image
-                    src={summary.icon}
-                    width={100}
-                    height={100}
-                    alt="uploaded image"
-                    className="absolute -left-3 top-[-25px] z-10 w-[190px] object-contain"
-                  />
-                  <h4 className="h4 relative z-20 w-full text-right">
-                    {convertFileSize(summary.size) || 0}
-                  </h4>
-                </div>
+              <div className="relative space-y-5">
+                {/* Floating Image */}
+                <Image
+                  src={summary.icon}
+                  width={100}
+                  height={100}
+                  alt="uploaded image"
+                  className="absolute -top-6 -left-4 z-10 w-40 object-contain"
+                />
 
-                <h5 className="h5 relative z-20 text-center">
+                {/* File Size */}
+                <h4 className="relative z-20 text-right text-lg font-semibold text-gray-700">
+                  {convertFileSize(summary.size) || 0}
+                </h4>
+
+                {/* Title */}
+                <h5 className="relative z-20 text-center text-xl font-bold text-gray-900">
                   {summary.title}
                 </h5>
-                <Separator className="bg-light-400" />
+
+                {/* Separator */}
+                <Separator className="bg-gray-300" />
+
+                {/* Date */}
                 <FormattedDateTime
                   date={summary.latestDate}
-                  className="text-center"
+                  className="block text-center text-sm text-gray-500"
                 />
               </div>
             </Link>
@@ -73,10 +77,10 @@ const Dashboard = async () => {
           <ul className="mt-5 flex flex-col gap-5">
             {files.documents.map((file: any) => (
               <Link
-                href={file.url}
+                href={getFileTypes(file.type)}
                 target="_blank"
                 className="flex items-center gap-3"
-                key={file.$id}
+                key={file.id}
               >
                 <Thumbnail
                   type={file.type}

@@ -182,7 +182,6 @@ export const constructDownloadUrl = (bucketFileId: string) => {
 
 // DASHBOARD UTILS
 export const getUsageSummary = (totalSpace: any) => {
-  console.log("space: ", totalSpace);
   return [
     {
       title: "Documents",
@@ -223,12 +222,31 @@ export const getFileTypesParams = (type: string) => {
     case "documents":
       return ["document"];
     case "images":
-      return ["image"];
+      return ["images"];
     case "media":
       return ["video", "audio"];
     case "others":
       return ["other"];
     default:
       return ["document"];
+  }
+};
+
+export const getFileTypes = (type: string) => {
+  const documents = ["pdf", "txt", "doc", "docx", "csv", "xlsx", "epub"];
+  const images = ["jpg", "jpeg", "png", "gif"];
+  const videos = ["mp4", "avi", "mov", "mkv"];
+  const audios = ["mp3", "wav", "flac", "aac"];
+
+  if (documents.includes(type)) {
+    return "documents";
+  } else if (images.includes(type)) {
+    return "images";
+  } else if (videos.includes(type)) {
+    return "videos";
+  } else if (audios.includes(type)) {
+    return "audios";
+  } else {
+    return "others";
   }
 };

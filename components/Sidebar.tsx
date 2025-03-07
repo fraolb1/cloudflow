@@ -17,19 +17,11 @@ const Sidebar = () => {
     <aside className="remove-scrollbar hidden h-screen w-[90px] flex-col overflow-auto px-5 py-7 sm:flex lg:w-[280px] xl:w-[325px] ">
       <Link href="/">
         <Image
-          src="/assets/icons/logo-full-brand.svg"
+          src="/assets/images/folder_logo.png"
           alt="logo"
-          width={160}
+          width={60}
           height={50}
-          className="hidden h-auto lg:block"
-        />
-
-        <Image
-          src="/assets/icons/logo-brand.svg"
-          alt="logo"
-          width={52}
-          height={52}
-          className="lg:hidden"
+          className="h-auto "
         />
       </Link>
 
@@ -61,7 +53,7 @@ const Sidebar = () => {
       </nav>
 
       <Image
-        src="/assets/images/files-2.png"
+        src="/assets/images/file-folder.jpg"
         alt="logo"
         width={506}
         height={418}
