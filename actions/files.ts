@@ -34,7 +34,6 @@ export const getFiles = async ({
   sort?: string;
   userId: string;
 }) => {
-  console.log(types);
   const typeMapping: Record<string, string[]> = {
     document: ["pdf", "txt", "json", "csv", "doc", "docx", "xls", "xlsx"],
     images: ["jpg", "jpeg", "png", "gif", "bmp", "svg"],
@@ -47,8 +46,6 @@ export const getFiles = async ({
         return typeMapping[type] || type;
       })
     : undefined;
-
-  console.log(expandedTypes);
 
   const aws_files = await db.file.findMany({
     where: {
@@ -107,7 +104,6 @@ export const renameFile = async ({
   extension: string;
   path: string;
 }) => {
-  console.log(fileId);
   const file = await db.file.findFirst({
     where: {
       id: fileId,
@@ -117,8 +113,6 @@ export const renameFile = async ({
   if (!file) {
     return "No File is Found";
   }
-
-  console.log(file);
 
   const key = file.key.split("/");
   key.pop();
@@ -260,7 +254,6 @@ export async function deleteFile({
   bucketFileId: string;
   path: string;
 }) {
-  console.log("file: ", fileId);
   return await db.file.update({
     where: { id: fileId },
     data: {

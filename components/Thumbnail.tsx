@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { cn, getFileIcon } from "@/lib/utils";
+import { cn, getFileIcon, getFileTypes } from "@/lib/utils";
 
 interface Props {
   type: string;
@@ -17,12 +17,15 @@ export const Thumbnail = ({
   imageClassName,
   className,
 }: Props) => {
-  const isImage = type === "image" && extension !== "svg";
+  const general_type = getFileTypes(type);
+  const isImage = type === "images" && extension !== "svg";
+
+  console.log(getFileTypes(type), url);
 
   return (
     <figure className={cn("thumbnail", className)}>
       <Image
-        src={isImage ? url : getFileIcon(extension, type)}
+        src={getFileIcon(extension, general_type)}
         alt="thumbnail"
         width={100}
         height={100}

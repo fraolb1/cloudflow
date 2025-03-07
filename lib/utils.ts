@@ -156,7 +156,7 @@ export const getFileIcon = (extension: string | undefined, type: string) => {
 
     default:
       switch (type) {
-        case "image":
+        case "images":
           return "/assets/icons/file-image.svg";
         case "document":
           return "/assets/icons/file-document.svg";

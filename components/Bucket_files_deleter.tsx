@@ -5,7 +5,6 @@ function Bucket_files_deleter() {
     const result = await fetch("api/files", {
       method: "DELETE",
     });
-    console.log(result);
   };
   return <Button onClick={handleClick}>Delete Bucket File</Button>;
 }

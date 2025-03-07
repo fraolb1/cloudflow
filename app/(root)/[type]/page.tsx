@@ -39,7 +39,7 @@ const Page = async ({ searchParams, params }: SearchParamProps) => {
       {files.documents.length > 0 ? (
         <section className="grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {files.documents.map((file: any) => (
-            <Card key={file.$id} file={file} />
+            <Card key={file.id} file={file} />
           ))}
         </section>
       ) : (

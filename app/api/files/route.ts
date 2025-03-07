@@ -39,8 +39,6 @@ export async function DELETE(request: Request) {
       await s3Client.send(deleteCommand);
     }
 
-    console.log("success");
-
     return NextResponse.json({
       message: `Successfully deleted ${deleteObjects.length} objects`,
     });
