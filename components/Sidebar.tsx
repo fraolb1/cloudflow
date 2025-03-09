@@ -32,7 +32,7 @@ const Sidebar = () => {
               <li
                 className={cn(
                   "flex text-light-100 gap-4 rounded-xl lg:w-full justify-center lg:justify-start items-center h5 lg:px-[30px] h-[52px] lg:rounded-full",
-                  pathname === url && "shad-active"
+                  pathname === url && "bg-brand text-slate-500  shadow-drop-2"
                 )}
               >
                 <Image
@@ -41,8 +41,8 @@ const Sidebar = () => {
                   width={24}
                   height={24}
                   className={cn(
-                    "w-6 filter invert opacity-25",
-                    pathname === url && "invert-0 opacity-100"
+                    "w-6 filter invert opacity-70",
+                    pathname === url && "invert-20 opacity-100"
                   )}
                 />
                 <p className="hidden lg:block">{name}</p>

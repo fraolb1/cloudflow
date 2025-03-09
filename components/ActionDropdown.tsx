@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { deleteFile, renameFile, updateFileUsers } from "@/actions/files";
 import { usePathname } from "next/navigation";
-import { FileDetails, ShareInput } from "@/components/ActionsModalContent";
+import { FileDetails } from "@/components/ActionsModalContent";
 
 const ActionDropdown = ({ file }: { file: any }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,10 +57,6 @@ const ActionDropdown = ({ file }: { file: any }) => {
           extension: file.extension,
           path,
         });
-        return true;
-      },
-      share: async () => {
-        await updateFileUsers({ fileId: file.$id, emails, path });
         return true;
       },
       delete: async () => {
@@ -112,13 +108,7 @@ const ActionDropdown = ({ file }: { file: any }) => {
             />
           )}
           {value === "details" && <FileDetails file={file} />}
-          {value === "share" && (
-            <ShareInput
-              file={file}
-              onInputChange={setEmails}
-              onRemove={handleRemoveUser}
-            />
-          )}
+
           {value === "delete" && (
             <p className="delete-confirmation">
               Are you sure you want to delete{` `}
@@ -126,7 +116,7 @@ const ActionDropdown = ({ file }: { file: any }) => {
             </p>
           )}
         </DialogHeader>
-        {["rename", "delete", "share"].includes(value) && (
+        {["rename", "delete"].includes(value) && (
           <DialogFooter className="flex flex-col gap-3 md:flex-row">
             <Button onClick={closeAllModals} className="modal-cancel-button">
               Cancel
@@ -173,9 +163,7 @@ const ActionDropdown = ({ file }: { file: any }) => {
                 setAction(actionItem);
 
                 if (
-                  ["rename", "share", "delete", "details"].includes(
-                    actionItem.value
-                  )
+                  ["rename", "delete", "details"].includes(actionItem.value)
                 ) {
                   setIsModalOpen(true);
                 }

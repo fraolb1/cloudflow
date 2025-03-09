@@ -47,14 +47,18 @@ export const getFiles = async ({
       })
     : undefined;
 
-  const aws_files = await db.file.findMany({
+  const files = await db.file.findMany({
     where: {
       ownerId: userId,
+
       name: searchText
         ? { contains: searchText, mode: "insensitive" }
         : undefined,
       type: expandedTypes ? { in: expandedTypes } : undefined,
       deleted: false,
+    },
+    include: {
+      owner: true,
     },
     take: 10,
     orderBy: {
@@ -62,7 +66,7 @@ export const getFiles = async ({
     },
   });
 
-  return { documents: aws_files };
+  return { documents: files };
 };
 
 export async function renameS3Object(
