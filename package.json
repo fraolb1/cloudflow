@@ -1,5 +1,5 @@
 {
-  "name": "skyflow",
+  "name": "cloudflow",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -27,6 +27,7 @@
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "cmdk": "^1.0.0",
     "framer-motion": "^12.4.10",
     "input-otp": "^1.2.5",
     "lucide-react": "^0.454.0",
