@@ -18,6 +18,8 @@ model User {
 
   File File[]
 
+
+  FileShare FileShare[]
 }
 
 model Account {
@@ -76,6 +78,26 @@ model File {
   @@index([folderId])
   @@index([status])
   @@index([deleted])
+  FileShare FileShare[]
+}
+
+model FileShare {
+  fileId     String
+  userId     String
+  permission FilePermission @default(VIEW)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  file       File          @relation(fields: [fileId], references: [id])
+  user       User          @relation(fields: [userId], references: [id])
+
+  @@id([fileId, userId])
+}
+
+enum FilePermission {
+  VIEW
+  EDIT
+  MANAGE
 }
 
 enum FileStatus {

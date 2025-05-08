@@ -2,7 +2,7 @@
 import { s3Client } from "@/lib/aws";
 import { db } from "@/lib/db";
 import { CopyObjectCommand, DeleteObjectCommand, S3 } from "@aws-sdk/client-s3";
-import { useSession } from "next-auth/react";
+import { revalidatePath } from "next/cache";
 
 export type File = {
   id: string;
@@ -28,11 +28,13 @@ export const getFiles = async ({
   searchText,
   sort,
   userId,
+  take = 10,
 }: {
-  types?: FileType[];
+  types?: any[];
   searchText?: string;
   sort?: string;
   userId: string;
+  take?: number;
 }) => {
   const typeMapping: Record<string, string[]> = {
     document: ["pdf", "txt", "json", "csv", "doc", "docx", "xls", "xlsx"],
@@ -50,19 +52,18 @@ export const getFiles = async ({
   const files = await db.file.findMany({
     where: {
       ownerId: userId,
-
       name: searchText
         ? { contains: searchText, mode: "insensitive" }
         : undefined,
-      type: expandedTypes ? { in: expandedTypes } : undefined,
+      extension: expandedTypes ? { in: expandedTypes } : undefined,
       deleted: false,
     },
     include: {
       owner: true,
     },
-    take: 10,
+    take,
     orderBy: {
-      createdAt: "desc",
+      createdAt: sort === "asc" ? "asc" : "desc",
     },
   });
 
@@ -75,7 +76,7 @@ export async function renameS3Object(
   newKey: string
 ) {
   try {
-    const copy = await s3Client.send(
+    await s3Client.send(
       new CopyObjectCommand({
         Bucket: bucketName,
         CopySource: `${bucketName}/${oldKey}`,
@@ -83,7 +84,7 @@ export async function renameS3Object(
       })
     );
 
-    const deleted = await s3Client.send(
+    await s3Client.send(
       new DeleteObjectCommand({
         Bucket: bucketName,
         Key: oldKey,
@@ -108,42 +109,51 @@ export const renameFile = async ({
   extension: string;
   path: string;
 }) => {
-  const file = await db.file.findFirst({
-    where: {
-      id: fileId,
-    },
-  });
+  try {
+    const file = await db.file.findFirst({
+      where: {
+        id: fileId,
+      },
+    });
 
-  if (!file) {
-    return "No File is Found";
+    if (!file) {
+      throw new Error("File not found");
+    }
+
+    const keyParts = file.key.split("/");
+    keyParts.pop();
+    const newKey = [...keyParts, `${name}.${extension}`].join("/");
+
+    const changeAwsName = await renameS3Object(
+      process.env.AWS_S3_BUCKET || "",
+      file.key,
+      newKey
+    );
+
+    if (!changeAwsName.success) {
+      throw new Error("Failed to rename file in S3");
+    }
+
+    const fileUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${newKey}`;
+
+    const updatedFile = await db.file.update({
+      where: {
+        id: fileId,
+      },
+      data: {
+        name: `${name}.${extension}`,
+        key: newKey,
+        url: fileUrl,
+        extension,
+      },
+    });
+
+    revalidatePath(path);
+    return updatedFile;
+  } catch (error) {
+    console.error("Error renaming file:", error);
+    throw error;
   }
-
-  const key = file.key.split("/");
-  key.pop();
-  key.push(`${name}`);
-
-  const new_key = key.join("/");
-
-  const change_Aws_name = await renameS3Object(
-    process.env.AWS_S3_BUCKET || "",
-    file.key,
-    new_key.toString()
-  );
-
-  if (!change_Aws_name.success) {
-    return "Unseccusseful";
-  }
-  const fileUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${new_key}`;
-  return await db.file.update({
-    where: {
-      id: fileId,
-    },
-    data: {
-      name: name,
-      key: new_key,
-      url: fileUrl,
-    },
-  });
 };
 
 export const updateFileUsers = async ({
@@ -154,13 +164,58 @@ export const updateFileUsers = async ({
   fileId: string;
   emails: string[];
   path: string;
-}) => {};
+}) => {
+  try {
+    // First, verify the file exists
+    const file = await db.file.findUnique({
+      where: { id: fileId },
+    });
+
+    if (!file) {
+      throw new Error("File not found");
+    }
+
+    // Find users with the provided emails
+    const users = await db.user.findMany({
+      where: {
+        email: { in: emails },
+      },
+    });
+
+    // Create file shares for each user
+    const fileShares = await Promise.all(
+      users.map(async (user) => {
+        return db.fileShare.upsert({
+          where: {
+            fileId_userId: {
+              fileId,
+              userId: user.id,
+            },
+          },
+          create: {
+            fileId,
+            userId: user.id,
+            permission: "VIEW",
+          },
+          update: {},
+        });
+      })
+    );
+
+    revalidatePath(path);
+    return fileShares;
+  } catch (error) {
+    console.error("Error updating file users:", error);
+    throw error;
+  }
+};
 
 export const getTotalSpaceUsed = async (userId: string) => {
   const totalSpace = await db.file.groupBy({
     by: ["type"],
     where: {
       ownerId: userId,
+      deleted: false,
     },
     _sum: {
       size: true,
@@ -170,7 +225,6 @@ export const getTotalSpaceUsed = async (userId: string) => {
     },
   });
 
-  // Mapping file types to categories
   const categoryMapping: Record<
     string,
     "documents" | "images" | "video" | "audio" | "others"
@@ -178,15 +232,20 @@ export const getTotalSpaceUsed = async (userId: string) => {
     pdf: "documents",
     txt: "documents",
     doc: "documents",
+    docx: "documents",
     csv: "documents",
+    xls: "documents",
     xlsx: "documents",
     jpg: "images",
     jpeg: "images",
     png: "images",
     gif: "images",
+    bmp: "images",
+    svg: "images",
     mp4: "video",
     avi: "video",
     mov: "video",
+    wmv: "video",
     mkv: "video",
     mp3: "audio",
     wav: "audio",
@@ -228,23 +287,26 @@ export async function createFileRecord(fileData: {
   size: number;
   type: string;
   ownerId: string;
+  folderId?: string | null;
 }) {
+  const extension = fileData.name.split(".").pop() || null;
+
   return await db.file.create({
     data: {
       ...fileData,
-      extension: fileData.name.split(".").pop() || null,
+      extension,
+      status: "COMPLETED",
     },
   });
 }
 
-// Get user's files
-export async function getUserFiles(userId: string) {
+export async function getUserFiles(userId: string, folderId?: string | null) {
   return await db.file.findMany({
     where: {
       ownerId: userId,
       deleted: false,
+      folderId: folderId === undefined ? undefined : folderId,
     },
-
     orderBy: {
       createdAt: "desc",
     },
@@ -253,18 +315,26 @@ export async function getUserFiles(userId: string) {
 
 export async function deleteFile({
   fileId,
+  path,
 }: {
   fileId: string;
-  bucketFileId: string;
   path: string;
 }) {
-  return await db.file.update({
-    where: { id: fileId },
-    data: {
-      deleted: true,
-      deletedAt: new Date(),
-    },
-  });
+  try {
+    const deletedFile = await db.file.update({
+      where: { id: fileId },
+      data: {
+        deleted: true,
+        deletedAt: new Date(),
+      },
+    });
+
+    revalidatePath(path);
+    return deletedFile;
+  } catch (error) {
+    console.error("Error deleting file:", error);
+    throw error;
+  }
 }
 
 export async function searchFiles(userId: string, searchTerm: string) {
@@ -277,5 +347,53 @@ export async function searchFiles(userId: string, searchTerm: string) {
         { type: { contains: searchTerm, mode: "insensitive" } },
       ],
     },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
+}
+
+export async function getFileById(fileId: string) {
+  return await db.file.findUnique({
+    where: { id: fileId },
+  });
+}
+
+export async function getSharedFiles(userId: string) {
+  return await db.fileShare.findMany({
+    where: {
+      userId,
+    },
+    include: {
+      file: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}
+
+export async function moveFile({
+  fileId,
+  folderId,
+  path,
+}: {
+  fileId: string;
+  folderId: string | null;
+  path: string;
+}) {
+  try {
+    const updatedFile = await db.file.update({
+      where: { id: fileId },
+      data: {
+        folderId,
+      },
+    });
+
+    revalidatePath(path);
+    return updatedFile;
+  } catch (error) {
+    console.error("Error moving file:", error);
+    throw error;
+  }
 }
