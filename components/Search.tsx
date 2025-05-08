@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-
+import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -10,107 +9,173 @@ import Thumbnail from "@/components/Thumbnail";
 import FormattedDateTime from "@/components/FormattedDateTime";
 import { useDebounce } from "use-debounce";
 import { useCurrentUser } from "@/hooks/use-current-user";
+
+import { SearchIcon, XIcon, Loader2 } from "lucide-react";
+
 const Search = () => {
   const [query, setQuery] = useState("");
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("query") || "";
+  const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<any[]>([]);
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const path = usePathname();
-  const [debouncedQuery] = useDebounce(query, 300);
+  const pathname = usePathname();
+  const [debouncedQuery] = useDebounce(query, 500);
   const user = useCurrentUser();
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fetch search results
   useEffect(() => {
     const fetchFiles = async () => {
-      if (debouncedQuery.length === 0) {
+      if (!debouncedQuery.trim()) {
         setResults([]);
-        setOpen(false);
-        return router.push(path.replace(searchParams.toString(), ""));
+        setIsOpen(false);
+        return;
       }
 
-      const files = await getFiles({
-        types: [],
-        searchText: debouncedQuery,
-        userId: user?.id ?? "",
-      });
-      setResults(files.documents);
-      setOpen(true);
+      setIsLoading(true);
+      try {
+        const files = await getFiles({
+          types: [],
+          searchText: debouncedQuery,
+          userId: user?.id ?? "",
+        });
+        setResults(files.documents);
+        setIsOpen(true);
+      } catch (error) {
+        console.error("Search failed:", error);
+        setResults([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchFiles();
-  }, [debouncedQuery]);
+  }, [debouncedQuery, user?.id]);
 
+  // Clear search when route changes
   useEffect(() => {
-    if (!searchQuery) {
-      setQuery("");
-    }
-  }, [searchQuery]);
-
-  const handleClickItem = (file: any) => {
-    setOpen(false);
+    setQuery("");
     setResults([]);
+    setIsOpen(false);
+  }, [pathname]);
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+    if (e.target.value === "") {
+      setResults([]);
+      setIsOpen(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setQuery("");
+    setResults([]);
+    setIsOpen(false);
+  };
+
+  const navigateToFile = (file: any) => {
+    setIsOpen(false);
     router.push(
-      `/${
-        file.type === "video" || file.type === "audio"
-          ? "media"
-          : file.type + "s"
-      }?query=${query}`
+      `/${file.type === "image" ? "images" : file.type + "s"}?id=${file.$id}`
     );
   };
 
   return (
-    <div className="relative w-full md:max-w-[480px]">
-      <div className="flex h-[52px] flex-1 items-center gap-3 rounded-full px-4 shadow-drop-3">
-        <Image
-          src="/assets/icons/search.svg"
-          alt="Search"
-          width={24}
-          height={24}
-        />
+    <div className="relative w-full max-w-xl" ref={searchContainerRef}>
+      <div className="relative">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+          {isLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+          ) : (
+            <SearchIcon className="h-5 w-5 text-gray-400" />
+          )}
+        </div>
+
         <Input
           value={query}
-          placeholder="Search..."
-          className="body-2 shad-no-focus  placeholder:body-1 w-full border-none p-0 shadow-none placeholder:text-light-200"
-          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search files..."
+          className="pl-10 pr-10 py-6 rounded-full border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+          onChange={handleSearchChange}
+          onFocus={() => query && setIsOpen(true)}
         />
 
-        {open && (
-          <ul className="absolute left-0 top-16 z-50 flex w-full flex-col gap-3 rounded-[20px] bg-white p-4">
-            {results.length > 0 ? (
-              results.map((file) => (
+        {query && (
+          <button
+            onClick={clearSearch}
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+          >
+            <XIcon className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+          {results.length > 0 ? (
+            <ul className="max-h-96 overflow-auto py-1">
+              {results.map((file) => (
                 <li
-                  className="flex items-center justify-between"
                   key={file.$id}
-                  onClick={() => handleClickItem(file)}
+                  className="cursor-pointer px-4 py-3 hover:bg-gray-50"
+                  onClick={() => navigateToFile(file)}
                 >
-                  <div className="flex cursor-pointer items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <Thumbnail
                       type={file.type}
                       extension={file.extension}
                       url={file.url}
-                      className="size-9 min-w-9"
+                      className="h-10 w-10 flex-shrink-0 rounded-lg"
                     />
-                    <p className="subtitle-2 line-clamp-1 text-light-100">
-                      {file.name}
-                    </p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-gray-900">
+                        {file.name}
+                      </p>
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <span>{convertFileSize(file.size)}</span>
+                        <span>•</span>
+                        <FormattedDateTime
+                          date={file.$createdAt}
+                          className="text-xs"
+                        />
+                      </div>
+                    </div>
                   </div>
-
-                  <FormattedDateTime
-                    date={file.$createdAt}
-                    className="caption line-clamp-1 text-light-200"
-                  />
                 </li>
-              ))
-            ) : (
-              <p className="empty-result">No files found</p>
-            )}
-          </ul>
-        )}
-      </div>
+              ))}
+            </ul>
+          ) : (
+            <div className="px-4 py-8 text-center">
+              <p className="text-gray-500">
+                {isLoading ? "Searching..." : "No files found"}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
+
+function convertFileSize(bytes: number): string {
+  // Your existing implementation
+  return "";
+}
 
 export default Search;

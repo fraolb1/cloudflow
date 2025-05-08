@@ -6,16 +6,17 @@ import { Button } from "../ui/button";
 
 interface LogoutButtonProps {
   children?: React.ReactNode;
+  className?: string;
 }
 
-export const LogoutButton = ({ children }: LogoutButtonProps) => {
+export const LogoutButton = ({ children, className }: LogoutButtonProps) => {
   const onClick = () => {
     logout();
   };
 
   return (
     <>
-      <form action={onClick}>
+      <form action={onClick} className={className}>
         <Button type="submit" className="sign-out-button">
           <Image
             src="/assets/icons/logout.svg"

@@ -1,98 +1,156 @@
 "use client";
 
+import React, { useMemo } from "react";
 import {
-  Label,
-  PolarGrid,
-  PolarRadiusAxis,
-  RadialBar,
   RadialBarChart,
+  RadialBar,
+  PolarAngleAxis,
+  ResponsiveContainer,
 } from "recharts";
-
 import {
   Card,
-  CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
+  CardContent,
 } from "@/components/ui/card";
-import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-import { calculatePercentage, convertFileSize } from "@/lib/utils";
+import { convertFileSize } from "@/lib/utils";
 
-const chartConfig = {
-  size: {
-    label: "Size",
-  },
-  used: {
-    label: "Used",
-    color: "black",
-  },
-} satisfies ChartConfig;
+type StorageData = {
+  used: number;
+  total?: number;
+  warningThreshold?: number;
+  dangerThreshold?: number;
+};
 
-export const Chart = ({ used = 0 }: { used: number }) => {
-  const percentage = calculatePercentage(used);
-  const chartData = [{ storage: "used", value: used, fill: "black" }];
+export const Chart = ({
+  used = 0,
+  total = 2000000000, // Default 2GB in bytes
+  warningThreshold = 0.7, // 70%
+  dangerThreshold = 0.9, // 90%
+}: StorageData) => {
+  const percentage = Math.round((used / total) * 100);
+  const remaining = total - used;
+
+  // Determine color based on usage thresholds
+  const getFillColor = () => {
+    const usageRatio = used / total;
+    if (usageRatio >= dangerThreshold) return "#ef4444"; // red-500
+    if (usageRatio >= warningThreshold) return "#f59e0b"; // amber-500
+    return "#6366f1"; // indigo-500
+  };
+
+  const chartData = useMemo(
+    () => [
+      {
+        name: "Used",
+        value: percentage,
+        fill: getFillColor(),
+      },
+      {
+        name: "Remaining",
+        value: 100 - percentage,
+        fill: "#e2e8f0", // gray-200
+      },
+    ],
+    [percentage]
+  );
 
   return (
-    <Card className="flex flex-col items-center rounded-2xl bg-brand p-6 shadow-lg md:flex-row xl:p-8">
-      <CardContent className="flex-1 p-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square w-[200px] sm:w-[220px] xl:w-[250px]"
-        >
-          <RadialBarChart
-            data={chartData}
-            startAngle={90}
-            endAngle={percentage + 90}
-            innerRadius={80}
-            outerRadius={110}
-          >
-            <PolarGrid gridType="circle" radialLines={false} stroke="none" />
-            <RadialBar dataKey="value" background cornerRadius={10} />
-            <PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>
-              <Label
-                content={({ viewBox }) =>
-                  viewBox && "cx" in viewBox && "cy" in viewBox ? (
-                    <text
-                      x={viewBox.cx}
-                      y={viewBox.cy}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      className="text-gray-800"
-                    >
-                      <tspan
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        className="text-3xl font-bold"
-                      >
-                        {percentage
-                          ? percentage.toString().replace(/^0+/, "")
-                          : "0"}
-                        %
-                      </tspan>
-                      <tspan
-                        x={viewBox.cx}
-                        y={(viewBox.cy || 0) + 24}
-                        className="text-sm text-gray-500"
-                      >
-                        Space Used
-                      </tspan>
-                    </text>
-                  ) : null
-                }
-              />
-            </PolarRadiusAxis>
-          </RadialBarChart>
-        </ChartContainer>
-      </CardContent>
-
-      <CardHeader className="flex-1 px-4 py-0 sm:px-6 lg:p-4 xl:pr-6">
-        <CardTitle className="text-lg font-semibold text-gray-900 md:text-center lg:text-left">
-          Available Storage
+    <Card className="border border-gray-200 bg-white shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-semibold text-gray-900">
+          Storage Overview
         </CardTitle>
-        <CardDescription className="mt-2 text-sm text-gray-600 md:text-center lg:text-left">
-          {used ? convertFileSize(used) : "2GB"} / 2GB
+        <CardDescription className="text-sm text-gray-500">
+          {convertFileSize(used)} used of {convertFileSize(total)}
         </CardDescription>
       </CardHeader>
+
+      <CardContent className="pt-0">
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadialBarChart
+              innerRadius="70%"
+              outerRadius="100%"
+              data={chartData}
+              startAngle={90}
+              endAngle={-270}
+            >
+              <PolarAngleAxis
+                type="number"
+                domain={[0, 100]}
+                angleAxisId={0}
+                tick={false}
+              />
+              <RadialBar
+                background
+                dataKey="value"
+                cornerRadius={8}
+                animationDuration={1500}
+              />
+
+              {/* Center text */}
+              <text
+                x="50%"
+                y="50%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="text-2xl font-bold"
+                fill={getFillColor()}
+              >
+                {percentage}%
+              </text>
+              <text
+                x="50%"
+                y="60%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="text-sm"
+                fill="#64748b" // gray-500
+              >
+                Used
+              </text>
+            </RadialBarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-4">
+          <div className="rounded-lg bg-gray-50 p-3">
+            <p className="text-sm font-medium text-gray-500">Available</p>
+            <p className="text-lg font-semibold text-gray-900">
+              {convertFileSize(remaining)}
+            </p>
+          </div>
+          <div className="rounded-lg bg-gray-50 p-3">
+            <p className="text-sm font-medium text-gray-500">Total</p>
+            <p className="text-lg font-semibold text-gray-900">
+              {convertFileSize(total)}
+            </p>
+          </div>
+        </div>
+
+        {percentage >= warningThreshold * 100 && (
+          <div
+            className={`mt-4 rounded-lg p-3 ${
+              percentage >= dangerThreshold * 100
+                ? "bg-red-50 text-red-700"
+                : "bg-amber-50 text-amber-700"
+            }`}
+          >
+            <p className="text-sm font-medium">
+              {percentage >= dangerThreshold * 100
+                ? "⚠️ Critical: Storage almost full"
+                : "⚠️ Warning: Storage reaching limit"}
+            </p>
+            <p className="text-xs mt-1">
+              {percentage >= dangerThreshold * 100
+                ? "Please free up space or upgrade your storage plan"
+                : "Consider cleaning up unused files"}
+            </p>
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 };
