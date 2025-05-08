@@ -74,3 +74,14 @@ declare interface ShareInputProps {
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemove: (email: string) => void;
 }
+
+// Ensure this file contains the definition of FileType
+export interface FileType {
+  $id: string;
+  name: string;
+  type: string;
+  extension: string;
+  url: string;
+  size: number;
+  $createdAt: string;
+}

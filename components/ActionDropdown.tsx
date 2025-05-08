@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { deleteFile, renameFile, updateFileUsers } from "@/actions/files";
 import { usePathname } from "next/navigation";
 import { FileDetails } from "@/components/ActionsModalContent";
+import { ActionType } from "@/types";
 
 const ActionDropdown = ({ file }: { file: any }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
