@@ -70,7 +70,7 @@ const FileUploader = ({ ownerId, className }: Props) => {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 w-full h-full">
       <label className={`inline-flex cursor-pointer ${className}`}>
         <button
           className="px-4 py-2 bg-slate-700 text-white  rounded-lg hover:bg-blue-700 inline-flex items-center gap-2"
