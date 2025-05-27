@@ -1,4 +1,4 @@
-# CloudSync
+# CloudFlow
 
 <!-- Insert project image below -->
 
@@ -19,7 +19,7 @@
 
 ## About
 
-CloudSync is a [brief description of your project]. This project aims to [state the main goal or purpose]. It is built using Next.js, React, aws etc.
+Cloudflow is a [brief description of your project]. This project aims to [state the main goal or purpose]. It is built using Next.js, React, aws etc.
 
 ## Features
 
@@ -43,8 +43,8 @@ These instructions will help you set up and run the project on your local machin
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/fraolb1/cloudsync.git
-cd cloudsync
+git clone https://github.com/fraolb1/cloudflow.git
+cd cloudflow
 ```
 
 2. Install dependencies:
@@ -88,7 +88,7 @@ Open [http://localhost:3000](http://localhost:3000)
 ## Project Structure
 
 ```
-cloudsync/
+cloudflow/
 ├── components/
 ├── app/
 ├── public/
